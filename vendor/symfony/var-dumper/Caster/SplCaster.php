@@ -19,6 +19,8 @@ use Symfony\Component\VarDumper\Cloner\Stub;
  * @author Nicolas Grekas <p@tchwork.com>
  *
  * @final
+ *
+ * @internal since Symfony 7.3
  */
 class SplCaster
 {
@@ -126,7 +128,7 @@ class SplCaster
         }
 
         if (isset($a[$prefix.'perms'])) {
-            $a[$prefix.'perms'] = new ConstStub(sprintf('0%o', $a[$prefix.'perms']), $a[$prefix.'perms']);
+            $a[$prefix.'perms'] = new ConstStub(\sprintf('0%o', $a[$prefix.'perms']), $a[$prefix.'perms']);
         }
 
         static $mapDate = ['aTime', 'mTime', 'cTime'];
@@ -142,7 +144,6 @@ class SplCaster
     public static function castFileObject(\SplFileObject $c, array $a, Stub $stub, bool $isNested): array
     {
         static $map = [
-            'csvControl' => 'getCsvControl',
             'flags' => 'getFlags',
             'maxLineLen' => 'getMaxLineLen',
             'fstat' => 'fstat',
@@ -151,6 +152,16 @@ class SplCaster
         ];
 
         $prefix = Caster::PREFIX_VIRTUAL;
+
+        if (\PHP_VERSION_ID < 90000) {
+            set_error_handler(static fn () => true, \E_DEPRECATED);
+            try {
+                $a[$prefix.'csvControl'] = $c->getCsvControl();
+            } catch (\Exception) {
+            } finally {
+                restore_error_handler();
+            }
+        }
 
         foreach ($map as $key => $accessor) {
             try {
@@ -187,7 +198,7 @@ class SplCaster
             $storage[] = new EnumStub([
                 'object' => $obj,
                 'info' => $clone->getInfo(),
-             ]);
+            ]);
         }
 
         $a += [
@@ -219,7 +230,7 @@ class SplCaster
             $map[] = new EnumStub([
                 'object' => $obj,
                 'data' => $data,
-             ]);
+            ]);
         }
 
         $a += [
@@ -232,12 +243,23 @@ class SplCaster
     private static function castSplArray(\ArrayObject|\ArrayIterator $c, array $a, Stub $stub, bool $isNested): array
     {
         $prefix = Caster::PREFIX_VIRTUAL;
-        $flags = $c->getFlags();
+        $hasDebugInfo = method_exists($c, '__debugInfo');
 
-        if (!($flags & \ArrayObject::STD_PROP_LIST)) {
-            $c->setFlags(\ArrayObject::STD_PROP_LIST);
-            $a = Caster::castObject($c, $c::class, method_exists($c, '__debugInfo'), $stub->class);
-            $c->setFlags($flags);
+        if ($c instanceof \ArrayObject) {
+            $flags = $c->getFlags();
+
+            if (!($flags & \ArrayObject::STD_PROP_LIST)) {
+                $c->setFlags(\ArrayObject::STD_PROP_LIST);
+                $a = Caster::castObject($c, $c::class, $hasDebugInfo, $stub->class);
+                $c->setFlags($flags);
+            }
+        } else {
+            // ArrayIterator::getFlags() and ArrayIterator::setFlags() are deprecated as of PHP 8.6
+            [$flags, , $properties] = $c->__serialize();
+
+            if (!($flags & \ArrayObject::STD_PROP_LIST)) {
+                $a = $properties;
+            }
         }
 
         unset($a["\0ArrayObject\0storage"], $a["\0ArrayIterator\0storage"]);

@@ -12,10 +12,14 @@
 namespace Symfony\Component\Validator\Mapping\Factory;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Validator\Constraints\DisableAutoMapping;
+use Symfony\Component\Validator\Constraints\EnableAutoMapping;
 use Symfony\Component\Validator\Exception\NoSuchMetadataException;
+use Symfony\Component\Validator\Mapping\AutoMappingStrategy;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
 use Symfony\Component\Validator\Mapping\MetadataInterface;
+use Symfony\Component\Validator\Mapping\PropertyMetadata;
 
 /**
  * Creates new {@link ClassMetadataInterface} instances.
@@ -68,7 +72,7 @@ class LazyLoadingMetadataFactory implements MetadataFactoryInterface
     public function getMetadataFor(mixed $value): MetadataInterface
     {
         if (!\is_object($value) && !\is_string($value)) {
-            throw new NoSuchMetadataException(sprintf('Cannot create metadata for non-objects. Got: "%s".', get_debug_type($value)));
+            throw new NoSuchMetadataException(\sprintf('Cannot create metadata for non-objects. Got: "%s".', get_debug_type($value)));
         }
 
         $class = ltrim(\is_object($value) ? $value::class : $value, '\\');
@@ -78,7 +82,7 @@ class LazyLoadingMetadataFactory implements MetadataFactoryInterface
         }
 
         if (!class_exists($class) && !interface_exists($class, false)) {
-            throw new NoSuchMetadataException(sprintf('The class or interface "%s" does not exist.', $class));
+            throw new NoSuchMetadataException(\sprintf('The class or interface "%s" does not exist.', $class));
         }
 
         $cacheItem = $this->cache?->getItem($this->escapeClassName($class));
@@ -93,7 +97,14 @@ class LazyLoadingMetadataFactory implements MetadataFactoryInterface
 
         $metadata = new ClassMetadata($class);
 
-        $this->loader?->loadClassMetadata($metadata);
+        if (null !== $this->loader) {
+            // Loaders that map constraints automatically need to know about the strategies declared in parent classes
+            $placeholders = $this->inheritAutoMappingStrategies($metadata);
+
+            $this->loader->loadClassMetadata($metadata);
+
+            $metadata->removeUnusedAutoMappingPlaceholders($placeholders);
+        }
 
         if (null !== $cacheItem) {
             $this->cache->save($cacheItem->set($metadata));
@@ -139,6 +150,52 @@ class LazyLoadingMetadataFactory implements MetadataFactoryInterface
         $class = ltrim(\is_object($value) ? $value::class : $value, '\\');
 
         return class_exists($class) || interface_exists($class, false);
+    }
+
+    /**
+     * Copies the auto-mapping strategies declared on the parent's properties.
+     *
+     * @return array<string, array{PropertyMetadata, int}> the property metadata created to carry them
+     */
+    private function inheritAutoMappingStrategies(ClassMetadata $metadata): array
+    {
+        if (!$parent = $metadata->getReflectionClass()->getParentClass()) {
+            return [];
+        }
+
+        $parentMetadata = $this->getMetadataFor($parent->name);
+
+        if (!$parentMetadata instanceof ClassMetadata) {
+            return [];
+        }
+
+        $class = $metadata->getClassName();
+        $placeholders = [];
+
+        foreach ($parentMetadata->getConstrainedProperties() as $property) {
+            foreach ($parentMetadata->getPropertyMetadata($property) as $member) {
+                if (!$member instanceof PropertyMetadata || $member->isPrivate($class)) {
+                    continue;
+                }
+
+                if (AutoMappingStrategy::NONE !== $strategy = $member->getAutoMappingStrategy()) {
+                    $metadata->addPropertyConstraint($property, AutoMappingStrategy::DISABLED === $strategy ? new DisableAutoMapping() : new EnableAutoMapping());
+
+                    foreach ($metadata->getPropertyMetadata($property) as $placeholder) {
+                        if ($placeholder instanceof PropertyMetadata) {
+                            $placeholders[$property] = [$placeholder, $strategy];
+
+                            break;
+                        }
+                    }
+                }
+
+                // The first property metadata is the one declared closest to the class, so it wins
+                break;
+            }
+        }
+
+        return $placeholders;
     }
 
     /**

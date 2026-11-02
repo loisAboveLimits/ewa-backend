@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\DependencyInjection\ParameterBag;
 
+use Symfony\Component\DependencyInjection\Exception\EmptyParameterValueException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ParameterCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ParameterNotFoundException;
@@ -26,6 +27,7 @@ class ParameterBag implements ParameterBagInterface
     protected array $parameters = [];
     protected bool $resolved = false;
     protected array $deprecatedParameters = [];
+    protected array $nonEmptyParameters = [];
 
     public function __construct(array $parameters = [])
     {
@@ -35,6 +37,8 @@ class ParameterBag implements ParameterBagInterface
     public function clear(): void
     {
         $this->parameters = [];
+        $this->deprecatedParameters = [];
+        $this->resolved = false;
     }
 
     public function add(array $parameters): void
@@ -54,11 +58,20 @@ class ParameterBag implements ParameterBagInterface
         return $this->deprecatedParameters;
     }
 
+    public function allNonEmpty(): array
+    {
+        return $this->nonEmptyParameters;
+    }
+
     public function get(string $name): array|bool|string|int|float|\UnitEnum|null
     {
         if (!\array_key_exists($name, $this->parameters)) {
             if (!$name) {
                 throw new ParameterNotFoundException($name);
+            }
+
+            if (\array_key_exists($name, $this->nonEmptyParameters)) {
+                throw new ParameterNotFoundException($name, extraMessage: $this->nonEmptyParameters[$name]);
             }
 
             $alternatives = [];
@@ -70,10 +83,10 @@ class ParameterBag implements ParameterBagInterface
             }
 
             $nonNestedAlternative = null;
-            if (!\count($alternatives) && str_contains($name, '.')) {
+            if (!$alternatives && str_contains($name, '.')) {
                 $namePartsLength = array_map('strlen', explode('.', $name));
                 $key = substr($name, 0, -1 * (1 + array_pop($namePartsLength)));
-                while (\count($namePartsLength)) {
+                while ($namePartsLength) {
                     if ($this->has($key)) {
                         if (\is_array($this->get($key))) {
                             $nonNestedAlternative = $key;
@@ -92,13 +105,17 @@ class ParameterBag implements ParameterBagInterface
             trigger_deprecation(...$this->deprecatedParameters[$name]);
         }
 
+        if (\array_key_exists($name, $this->nonEmptyParameters) && (null === $this->parameters[$name] || '' === $this->parameters[$name] || [] === $this->parameters[$name])) {
+            throw new EmptyParameterValueException($this->nonEmptyParameters[$name]);
+        }
+
         return $this->parameters[$name];
     }
 
     public function set(string $name, array|bool|string|int|float|\UnitEnum|null $value): void
     {
         if (is_numeric($name)) {
-            throw new InvalidArgumentException(sprintf('The parameter name "%s" cannot be numeric.', $name));
+            throw new InvalidArgumentException(\sprintf('The parameter name "%s" cannot be numeric.', $name));
         }
 
         $this->parameters[$name] = $value;
@@ -118,6 +135,11 @@ class ParameterBag implements ParameterBagInterface
         $this->deprecatedParameters[$name] = [$package, $version, $message, $name];
     }
 
+    public function cannotBeEmpty(string $name, string $message): void
+    {
+        $this->nonEmptyParameters[$name] = $message;
+    }
+
     public function has(string $name): bool
     {
         return \array_key_exists($name, $this->parameters);
@@ -125,7 +147,7 @@ class ParameterBag implements ParameterBagInterface
 
     public function remove(string $name): void
     {
-        unset($this->parameters[$name], $this->deprecatedParameters[$name]);
+        unset($this->parameters[$name], $this->deprecatedParameters[$name], $this->nonEmptyParameters[$name]);
     }
 
     public function resolve(): void
@@ -171,7 +193,7 @@ class ParameterBag implements ParameterBagInterface
             foreach ($value as $key => $v) {
                 $resolvedKey = \is_string($key) ? $this->resolveValue($key, $resolving) : $key;
                 if (!\is_scalar($resolvedKey) && !$resolvedKey instanceof \Stringable) {
-                    throw new RuntimeException(sprintf('Array keys must be a scalar-value, but found key "%s" to resolve to type "%s".', $key, get_debug_type($resolvedKey)));
+                    throw new RuntimeException(\sprintf('Array keys must be a scalar-value, but found key "%s" to resolve to type "%s".', $key, get_debug_type($resolvedKey)));
                 }
 
                 $args[$resolvedKey] = $this->resolveValue($v, $resolving);
@@ -210,7 +232,7 @@ class ParameterBag implements ParameterBagInterface
 
             $resolving[$key] = true;
 
-            return $this->resolved ? $this->get($key) : $this->resolveValue($this->get($key), $resolving);
+            return $this->resolved ? $this->escapeValue($this->get($key)) : $this->resolveValue($this->get($key), $resolving);
         }
 
         return preg_replace_callback('/%%|%([^%\s]+)%/', function ($match) use ($resolving, $value) {
@@ -227,13 +249,13 @@ class ParameterBag implements ParameterBagInterface
             $resolved = $this->get($key);
 
             if (!\is_string($resolved) && !is_numeric($resolved)) {
-                throw new RuntimeException(sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, get_debug_type($resolved), $value));
+                throw new RuntimeException(\sprintf('A string value must be composed of strings and/or numbers, but found parameter "%s" of type "%s" inside string value "%s".', $key, get_debug_type($resolved), $value));
             }
 
             $resolved = (string) $resolved;
             $resolving[$key] = true;
 
-            return $this->isResolved() ? $resolved : $this->resolveString($resolved, $resolving);
+            return $this->isResolved() ? $this->escapeValue($resolved) : $this->resolveString($resolved, $resolving);
         }, $value);
     }
 

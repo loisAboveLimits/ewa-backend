@@ -21,7 +21,7 @@ class RawMessage
     private bool $isGeneratorClosed;
 
     /**
-     * @param iterable|string|resource $message
+     * @param iterable<string>|string|resource $message
      */
     public function __construct(
         private $message,
@@ -67,7 +67,7 @@ class RawMessage
 
         if (\is_resource($this->message)) {
             rewind($this->message);
-            while ($line = fgets($this->message)) {
+            while (false !== $line = fgets($this->message)) {
                 yield $line;
             }
 

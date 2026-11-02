@@ -1,0 +1,10 @@
+name: 'EWA Menu API'
+type: module
+description: 'Exposes Drupal menus (main, footer…) as JSON for the Next.js front end: /api/menu/{menu}/{langcode}'
+core_version_requirement: ^10.3 || ^11
+package: EWA
+dependencies:
+  - drupal:system
+  - drupal:menu_link_content
+  - drupal:path_alias
+  - drupal:language

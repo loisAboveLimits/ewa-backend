@@ -1,0 +1,14 @@
+# GET /api/menu/main/en  →  JSON tree of the "main" menu in English
+# GET /api/menu/main/ar  →  same menu with Arabic titles and Arabic path aliases
+# The langcode part is optional; without it the current content language is used.
+ewa_menu_api.menu:
+  path: '/api/menu/{menu}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_menu_api\Controller\MenuApiController::menu'
+    langcode: ''
+  methods: [GET]
+  requirements:
+    # Menus are public navigation; menu items the visitor can't access are still filtered out below.
+    _access: 'TRUE'
+    menu: '[a-z0-9_-]+'
+    langcode: '[a-z]{0,3}(-[a-zA-Z]+)?'

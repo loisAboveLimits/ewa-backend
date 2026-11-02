@@ -1,0 +1,2 @@
+/* @license GPL-2.0-or-later https://www.drupal.org/licensing/faq */
+ul.menu.flex-tabs{border-bottom:1px solid var(--style_gray_300);}ul.menu.flex-tabs li a{color:var(--style_gray_700);font-size:14px;padding:10px 20px;display:block;background:var(--style_gray_300);}ul.menu.flex-tabs li a.is-active,ul.menu.flex-tabs li a:hover{color:var(--white);background:var(--primary);}ul.menu.flex-tabs li a.is-active{font-weight:600;}

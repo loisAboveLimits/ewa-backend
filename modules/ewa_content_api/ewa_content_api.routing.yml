@@ -1,0 +1,23 @@
+# Campus & Facilities (Media Center items tagged with taxonomy term 12), by language:
+#   GET /api/media/campus/en   GET /api/media/campus/ar
+ewa_content_api.campus:
+  path: '/api/media/campus/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaCenterApiController::category'
+    tid: '12'
+  requirements:
+    _permission: 'access content'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+# Same output for any Media Center category (taxonomy term id):
+#   GET /api/media/category/12/en
+ewa_content_api.category:
+  path: '/api/media/category/{tid}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaCenterApiController::category'
+  requirements:
+    _permission: 'access content'
+    tid: '\d+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]

@@ -1,0 +1,9 @@
+name: 'EWA Content API'
+type: module
+description: 'JSON endpoints for the Next.js site that Views REST exports cannot shape (nested arrays), e.g. Campus & Facilities with their galleries.'
+package: EWA
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - drupal:node
+  - drupal:media
+  - drupal:taxonomy

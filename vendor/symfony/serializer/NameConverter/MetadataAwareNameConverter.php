@@ -18,22 +18,22 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 /**
  * @author Fabien Bourigault <bourigaultfabien@gmail.com>
  */
-final class MetadataAwareNameConverter implements NameConverterInterface
+final class MetadataAwareNameConverter implements AdvancedNameConverterInterface
 {
     /**
      * @var array<string, array<string, string|null>>
      */
-    private static array $normalizeCache = [];
+    private array $normalizeCache = [];
 
     /**
      * @var array<string, array<string, string|null>>
      */
-    private static array $denormalizeCache = [];
+    private array $denormalizeCache = [];
 
     /**
      * @var array<string, array<string, string>>
      */
-    private static array $attributesMetadataCache = [];
+    private array $attributesMetadataCache = [];
 
     public function __construct(
         private readonly ClassMetadataFactoryInterface $metadataFactory,
@@ -43,37 +43,29 @@ final class MetadataAwareNameConverter implements NameConverterInterface
 
     public function normalize(string $propertyName, ?string $class = null, ?string $format = null, array $context = []): string
     {
-        $class = 1 < \func_num_args() ? func_get_arg(1) : null;
-        $format = 2 < \func_num_args() ? func_get_arg(2) : null;
-        $context = 3 < \func_num_args() ? func_get_arg(3) : [];
-
         if (null === $class) {
             return $this->normalizeFallback($propertyName, $class, $format, $context);
         }
 
-        if (!\array_key_exists($class, self::$normalizeCache) || !\array_key_exists($propertyName, self::$normalizeCache[$class])) {
-            self::$normalizeCache[$class][$propertyName] = $this->getCacheValueForNormalization($propertyName, $class);
+        if (!\array_key_exists($class, $this->normalizeCache) || !\array_key_exists($propertyName, $this->normalizeCache[$class])) {
+            $this->normalizeCache[$class][$propertyName] = $this->getCacheValueForNormalization($propertyName, $class);
         }
 
-        return self::$normalizeCache[$class][$propertyName] ?? $this->normalizeFallback($propertyName, $class, $format, $context);
+        return $this->normalizeCache[$class][$propertyName] ?? $this->normalizeFallback($propertyName, $class, $format, $context);
     }
 
     public function denormalize(string $propertyName, ?string $class = null, ?string $format = null, array $context = []): string
     {
-        $class = 1 < \func_num_args() ? func_get_arg(1) : null;
-        $format = 2 < \func_num_args() ? func_get_arg(2) : null;
-        $context = 3 < \func_num_args() ? func_get_arg(3) : [];
-
         if (null === $class) {
             return $this->denormalizeFallback($propertyName, $class, $format, $context);
         }
 
         $cacheKey = $this->getCacheKey($class, $context);
-        if (!\array_key_exists($cacheKey, self::$denormalizeCache) || !\array_key_exists($propertyName, self::$denormalizeCache[$cacheKey])) {
-            self::$denormalizeCache[$cacheKey][$propertyName] = $this->getCacheValueForDenormalization($propertyName, $class, $context);
+        if (!\array_key_exists($cacheKey, $this->denormalizeCache) || !\array_key_exists($propertyName, $this->denormalizeCache[$cacheKey])) {
+            $this->denormalizeCache[$cacheKey][$propertyName] = $this->getCacheValueForDenormalization($propertyName, $class, $context);
         }
 
-        return self::$denormalizeCache[$cacheKey][$propertyName] ?? $this->denormalizeFallback($propertyName, $class, $format, $context);
+        return $this->denormalizeCache[$cacheKey][$propertyName] ?? $this->denormalizeFallback($propertyName, $class, $format, $context);
     }
 
     private function getCacheValueForNormalization(string $propertyName, string $class): ?string
@@ -88,7 +80,7 @@ final class MetadataAwareNameConverter implements NameConverterInterface
         }
 
         if (null !== $attributesMetadata[$propertyName]->getSerializedName() && null !== $attributesMetadata[$propertyName]->getSerializedPath()) {
-            throw new LogicException(sprintf('Found SerializedName and SerializedPath attributes on property "%s" of class "%s".', $propertyName, $class));
+            throw new LogicException(\sprintf('Found SerializedName and SerializedPath attributes on property "%s" of class "%s".', $propertyName, $class));
         }
 
         return $attributesMetadata[$propertyName]->getSerializedName() ?? null;
@@ -102,11 +94,11 @@ final class MetadataAwareNameConverter implements NameConverterInterface
     private function getCacheValueForDenormalization(string $propertyName, string $class, array $context): ?string
     {
         $cacheKey = $this->getCacheKey($class, $context);
-        if (!\array_key_exists($cacheKey, self::$attributesMetadataCache)) {
-            self::$attributesMetadataCache[$cacheKey] = $this->getCacheValueForAttributesMetadata($class, $context);
+        if (!\array_key_exists($cacheKey, $this->attributesMetadataCache)) {
+            $this->attributesMetadataCache[$cacheKey] = $this->getCacheValueForAttributesMetadata($class, $context);
         }
 
-        return self::$attributesMetadataCache[$cacheKey][$propertyName] ?? null;
+        return $this->attributesMetadataCache[$cacheKey][$propertyName] ?? null;
     }
 
     private function denormalizeFallback(string $propertyName, ?string $class = null, ?string $format = null, array $context = []): string
@@ -123,33 +115,35 @@ final class MetadataAwareNameConverter implements NameConverterInterface
             return [];
         }
 
-        $classMetadata = $this->metadataFactory->getMetadataFor($class);
+        $attributesMetadata = $this->metadataFactory->getMetadataFor($class)->getAttributesMetadata();
+        $contextGroups = (array) ($context[AbstractNormalizer::GROUPS] ?? []);
 
         $cache = [];
-        foreach ($classMetadata->getAttributesMetadata() as $name => $metadata) {
-            if (null === $metadata->getSerializedName()) {
+        foreach ($attributesMetadata as $name => $metadata) {
+            if (null === $serializedName = $metadata->getSerializedName()) {
                 continue;
             }
 
-            if (null !== $metadata->getSerializedName() && null !== $metadata->getSerializedPath()) {
-                throw new LogicException(sprintf('Found SerializedName and SerializedPath attributes on property "%s" of class "%s".', $name, $class));
+            if (null !== $metadata->getSerializedPath()) {
+                throw new LogicException(\sprintf('Found SerializedName and SerializedPath attributes on property "%s" of class "%s".', $name, $class));
             }
 
             $metadataGroups = $metadata->getGroups();
 
-            $contextGroups = (array) ($context[AbstractNormalizer::GROUPS] ?? []);
-            $contextGroupsHasBeenDefined = [] !== $contextGroups;
-            $contextGroups = array_merge($contextGroups, ['Default', (false !== $nsSep = strrpos($class, '\\')) ? substr($class, $nsSep + 1) : $class]);
+            if (!$contextGroups) {
+                $sameNameMetadata = $attributesMetadata[$serializedName] ?? null;
 
-            if ($contextGroupsHasBeenDefined && !$metadataGroups) {
+                // without groups to tell them apart, the attribute using that name for itself wins
+                if ($metadataGroups && $sameNameMetadata && null === $sameNameMetadata->getSerializedName()) {
+                    continue;
+                }
+            } elseif (!$metadataGroups) {
+                continue;
+            } elseif (!array_intersect($metadataGroups, $contextGroups) && !\in_array('*', $contextGroups, true)) {
                 continue;
             }
 
-            if ($metadataGroups && !array_intersect(array_merge($metadataGroups, ['*']), $contextGroups)) {
-                continue;
-            }
-
-            $cache[$metadata->getSerializedName()] = $name;
+            $cache[$serializedName] = $name;
         }
 
         return $cache;
@@ -157,7 +151,7 @@ final class MetadataAwareNameConverter implements NameConverterInterface
 
     private function getCacheKey(string $class, array $context): string
     {
-        if (isset($context['cache_key'])) {
+        if ($context['cache_key'] ?? false) {
             return $class.'-'.$context['cache_key'];
         }
 
