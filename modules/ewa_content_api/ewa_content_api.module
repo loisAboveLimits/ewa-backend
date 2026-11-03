@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * EWA Content API hooks.
+ */
+
+use Drupal\ewa_content_api\Slug;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_ENTITY_TYPE_presave() for nodes.
+ *
+ * Optional: if the Media Center content type gets a plain-text "field_slug" field,
+ * it is filled from the Main Title on save whenever it is empty, so editors can see
+ * (and change) the slug. Without that field, slugs are worked out from the Main Title.
+ */
+function ewa_content_api_node_presave(NodeInterface $node): void {
+  if ($node->bundle() !== 'media_center' || !$node->isDefaultTranslation()) {
+    return;
+  }
+  if ($node->hasField('field_slug') && $node->get('field_slug')->isEmpty()) {
+    $title = Slug::fieldText($node, 'field_main_title') ?: (string) $node->label();
+    $slug = Slug::make($title);
+    if ($slug !== '') {
+      $node->set('field_slug', $slug);
+    }
+  }
+}

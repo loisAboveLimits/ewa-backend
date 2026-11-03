@@ -21,3 +21,51 @@ ewa_content_api.category:
     tid: '\d+'
     langcode: '[a-z]{2,3}'
   methods: [GET]
+
+# One Media Center post by category slug + post slug, by language:
+#   GET /api/media/post/events/renewable-energy-innovation-summit/en
+ewa_content_api.media_post:
+  path: '/api/media/post/{category}/{slug}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaPostApiController::post'
+  requirements:
+    _permission: 'access content'
+    category: '[a-z0-9-]+'
+    slug: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+# Media Center category page sections ({category} = events, news-articles, … or "all"):
+#   section 1  GET /api/media/featured/events/en?limit=3   featured posts, newest first
+#   section 2  GET /api/media/latest/events/en?limit=3     events: upcoming (soonest first) / others: latest
+#   section 3  GET /api/media/posts/events/en              all posts, newest first
+# Events are dated by their Date field, all other categories by their publishing date.
+ewa_content_api.media_posts:
+  path: '/api/media/posts/{category}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaPostApiController::posts'
+  requirements:
+    _permission: 'access content'
+    category: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+ewa_content_api.media_featured:
+  path: '/api/media/featured/{category}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaPostApiController::featured'
+  requirements:
+    _permission: 'access content'
+    category: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+ewa_content_api.media_latest:
+  path: '/api/media/latest/{category}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\MediaPostApiController::latest'
+  requirements:
+    _permission: 'access content'
+    category: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
