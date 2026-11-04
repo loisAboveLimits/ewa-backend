@@ -44,3 +44,14 @@ After updating the module files: `drush cr`.
 
 `date` = the event's **Date** field for Events, the **publishing date** (Authored on) for every
 other category. Each item also has `event_date` and `published`.
+
+## Careers
+
+`GET /api/careers/{langcode}` (`?limit=5`) — published nodes of the content type **careers**, newest first.
+Each item: `nid`, `title`, `main_title`, `lang`, `published`, `date` (first date field, else published),
+`location` (field named *location / city / branch / place / region*), `image` (`{ image, alt }`),
+`link` (first Link field), `excerpt`, and `fields` (every `field_*` as plain values).
+`slug`, `href` (`/career/{slug}`) and `content` (HTML) are included too.
+`GET /api/career/{slug}/{langcode}` — one career (404 JSON when not found). The slug comes from the
+career's English Main Title (or `field_slug` when the content type has one — filled in on save).
+A career without a translation in `{langcode}` comes back in its original language.

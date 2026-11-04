@@ -69,3 +69,26 @@ ewa_content_api.media_latest:
     category: '[a-z0-9-]+'
     langcode: '[a-z]{2,3}'
   methods: [GET]
+
+# Careers (content type "careers") for the Join page carousel, by language, newest first:
+#   GET /api/careers/en   GET /api/careers/ar?limit=5
+ewa_content_api.careers:
+  path: '/api/careers/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\CareersApiController::list'
+  requirements:
+    _permission: 'access content'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+# One career by slug (from its English Main Title), by language — for /career/[slug]:
+#   GET /api/career/it-manager/en   GET /api/career/it-manager/ar
+ewa_content_api.career:
+  path: '/api/career/{slug}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\CareersApiController::career'
+  requirements:
+    _permission: 'access content'
+    slug: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]

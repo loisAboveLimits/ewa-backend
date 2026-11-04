@@ -11,12 +11,12 @@ use Drupal\node\NodeInterface;
 /**
  * Implements hook_ENTITY_TYPE_presave() for nodes.
  *
- * Optional: if the Media Center content type gets a plain-text "field_slug" field,
+ * Optional: if the Media Center or Careers content type gets a plain-text "field_slug" field,
  * it is filled from the Main Title on save whenever it is empty, so editors can see
  * (and change) the slug. Without that field, slugs are worked out from the Main Title.
  */
 function ewa_content_api_node_presave(NodeInterface $node): void {
-  if ($node->bundle() !== 'media_center' || !$node->isDefaultTranslation()) {
+  if (!in_array($node->bundle(), ['media_center', 'careers'], TRUE) || !$node->isDefaultTranslation()) {
     return;
   }
   if ($node->hasField('field_slug') && $node->get('field_slug')->isEmpty()) {
