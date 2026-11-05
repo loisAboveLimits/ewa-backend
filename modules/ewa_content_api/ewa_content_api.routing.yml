@@ -92,3 +92,36 @@ ewa_content_api.career:
     slug: '[a-z0-9-]+'
     langcode: '[a-z]{2,3}'
   methods: [GET]
+
+# Awards (content type "awards") for the Awards page, by language, by date newest first:
+#   GET /api/awards/en   GET /api/awards/ar
+ewa_content_api.awards:
+  path: '/api/awards/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\AwardsApiController::list'
+  requirements:
+    _permission: 'access content'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+# Team members (content type "team") for /team/[slug], by language:
+#   GET /api/team/en                       every member
+#   GET /api/team/thamer-al-sharhan/en     one member (slug from the English name)
+ewa_content_api.team_list:
+  path: '/api/team/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\TeamApiController::list'
+  requirements:
+    _permission: 'access content'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]
+
+ewa_content_api.team_member:
+  path: '/api/team/{slug}/{langcode}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\TeamApiController::career'
+  requirements:
+    _permission: 'access content'
+    slug: '[a-z0-9-]+'
+    langcode: '[a-z]{2,3}'
+  methods: [GET]

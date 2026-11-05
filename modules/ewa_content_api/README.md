@@ -55,3 +55,16 @@ Each item: `nid`, `title`, `main_title`, `lang`, `published`, `date` (first date
 `GET /api/career/{slug}/{langcode}` — one career (404 JSON when not found). The slug comes from the
 career's English Main Title (or `field_slug` when the content type has one — filled in on save).
 A career without a translation in `{langcode}` comes back in its original language.
+
+## Awards
+
+`GET /api/awards/{langcode}` (`?limit=10`) — published nodes of the content type **awards**, sorted by
+their date field (newest first; the publishing date when an award has no date). Same item shape as the
+careers API: `nid`, `title`, `main_title`, `date`, `published`, `image` (`{ image, alt }`), `excerpt`,
+`content` (HTML), `fields`. An award without a translation in `{langcode}` comes back in its original language.
+
+## Team
+
+`GET /api/team/{langcode}` — published nodes of the content type **team**.
+`GET /api/team/{slug}/{langcode}` — one member (404 JSON when not found); the slug comes from the member's
+English name (node title). Same item shape as the careers API plus `position` (`field_position`).

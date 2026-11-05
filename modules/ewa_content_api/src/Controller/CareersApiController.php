@@ -42,6 +42,10 @@ use Symfony\Component\HttpFoundation\Request;
 class CareersApiController extends ControllerBase {
 
   protected const BUNDLE = 'careers';
+  /** URL of an item's inner page on the Next.js site, before the slug. */
+  protected const PATH = '/career/';
+  /** Item value the list is sorted by, newest first: 'published' or 'date'. */
+  protected const SORT_BY = 'published';
   protected const DATE_TYPES = ['datetime', 'daterange', 'timestamp', 'smartdate'];
   protected const LOCATION_HINTS = ['location', 'city', 'branch', 'place', 'region'];
   protected const EXCERPT_FIELDS = ['field_excerpt', 'field_sub_title', 'field_subtitle', 'field_summary'];
@@ -66,8 +70,9 @@ class CareersApiController extends ControllerBase {
       }
       $items[] = $this->serialize($node, $slug, $langcode, $cache);
     }
-    // newest first
-    usort($items, fn(array $a, array $b) => strcmp($b['published'], $a['published']) ?: $b['nid'] <=> $a['nid']);
+    // newest first (careers: by publishing date; subclasses can sort by another value)
+    $key = static::SORT_BY;
+    usort($items, fn(array $a, array $b) => strcmp((string) $b[$key], (string) $a[$key]) ?: $b['nid'] <=> $a['nid']);
     if ($limit > 0) {
       $items = array_slice($items, 0, $limit);
     }
@@ -81,14 +86,14 @@ class CareersApiController extends ControllerBase {
     $node = $this->careersBySlug($cache)[$slug] ?? NULL;
     $node = $node ? $this->inLanguage($node, $langcode) : NULL;
     if (!$node) {
-      return (new CacheableJsonResponse(['message' => "No career \"$slug\" ($langcode)"], 404))->addCacheableDependency($cache);
+      return (new CacheableJsonResponse(['message' => "No " . static::BUNDLE . " item \"$slug\" ($langcode)"], 404))->addCacheableDependency($cache);
     }
     return (new CacheableJsonResponse($this->serialize($node, $slug, $langcode, $cache)))->addCacheableDependency($cache);
   }
 
   protected function baseCache(): CacheableMetadata {
     return (new CacheableMetadata())
-      ->addCacheTags(['node_list', 'node_list:' . self::BUNDLE, 'taxonomy_term_list', 'media_list'])
+      ->addCacheTags(['node_list', 'node_list:' . static::BUNDLE, 'taxonomy_term_list', 'media_list'])
       ->addCacheContexts(['url.path', 'user.permissions']);
   }
 
@@ -110,7 +115,7 @@ class CareersApiController extends ControllerBase {
     $storage = $this->entityTypeManager()->getStorage('node');
     $nids = $storage->getQuery()
       ->accessCheck(TRUE)
-      ->condition('type', self::BUNDLE)
+      ->condition('type', static::BUNDLE)
       ->condition('status', 1)
       ->sort('nid', 'ASC')
       ->execute();
@@ -181,7 +186,7 @@ class CareersApiController extends ControllerBase {
     return [
       'nid' => (int) $node->id(),
       'slug' => $slug,
-      'href' => "/career/$slug",
+      'href' => static::PATH . $slug,
       'title' => $node->label(),
       'main_title' => Slug::fieldText($node, 'field_main_title') ?: $node->label(),
       'lang' => $node->language()->getId(),
