@@ -1,0 +1,184 @@
+<?php
+
+/**
+ * @file
+ * Creates the registration fields on user accounts when the module is enabled.
+ *
+ * Safe to run again: fields that already exist are left as they are (and keep their data).
+ * The fields stay when the module is uninstalled, so no trainee data is lost.
+ */
+
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
+use Drupal\Core\Entity\Entity\EntityViewDisplay;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * The fields: machine name => definition.
+ *
+ * Keys of the list fields are the values the Next.js registration form sends.
+ */
+function ewa_trainee_fields_definitions(): array {
+  $yes_no = ['on_label' => 'Yes', 'off_label' => 'No'];
+  return [
+    // ---- Personal information
+    'field_national_id' => ['type' => 'string', 'label' => 'National ID / Iqama', 'ar' => 'رقم الهوية الوطنية / الإقامة', 'required' => TRUE, 'storage' => ['max_length' => 10], 'group' => 'personal'],
+    'field_first_name' => ['type' => 'string', 'label' => 'First name', 'ar' => 'الاسم الأول', 'required' => TRUE, 'storage' => ['max_length' => 100], 'group' => 'personal'],
+    'field_father_name' => ['type' => 'string', 'label' => "Father's name", 'ar' => 'اسم الأب', 'required' => TRUE, 'storage' => ['max_length' => 100], 'group' => 'personal'],
+    'field_grandfather_name' => ['type' => 'string', 'label' => "Grandfather's name", 'ar' => 'اسم الجد', 'required' => TRUE, 'storage' => ['max_length' => 100], 'group' => 'personal'],
+    'field_last_name' => ['type' => 'string', 'label' => 'Last name', 'ar' => 'اسم العائلة', 'required' => TRUE, 'storage' => ['max_length' => 100], 'group' => 'personal'],
+    'field_gender' => ['type' => 'list_string', 'label' => 'Gender', 'ar' => 'الجنس', 'values' => ['male' => ['Male', 'ذكر'], 'female' => ['Female', 'أنثى']], 'group' => 'personal'],
+    'field_date_of_birth' => ['type' => 'datetime', 'label' => 'Date of birth', 'ar' => 'تاريخ الميلاد', 'storage' => ['datetime_type' => 'date'], 'group' => 'personal'],
+    'field_height' => ['type' => 'integer', 'label' => 'Height (cm)', 'ar' => 'الطول (سم)', 'field' => ['min' => 100, 'max' => 250, 'suffix' => ' cm'], 'group' => 'personal'],
+    'field_weight' => ['type' => 'integer', 'label' => 'Weight (kg)', 'ar' => 'الوزن (كجم)', 'field' => ['min' => 30, 'max' => 250, 'suffix' => ' kg'], 'group' => 'personal'],
+    'field_mobile' => ['type' => 'string', 'label' => 'Mobile number', 'ar' => 'رقم الجوال', 'storage' => ['max_length' => 9], 'description' => '9 digits starting with 5 (5XXXXXXXX).', 'group' => 'personal'],
+    'field_alt_mobile' => ['type' => 'string', 'label' => 'Alternative mobile number', 'ar' => 'رقم جوال بديل', 'storage' => ['max_length' => 9], 'description' => '9 digits starting with 5 (5XXXXXXXX).', 'group' => 'personal'],
+    'field_alt_relation' => ['type' => 'string', 'label' => 'Relation to alternative contact', 'ar' => 'صلة القرابة بصاحب الرقم البديل', 'storage' => ['max_length' => 100], 'group' => 'personal'],
+    'field_health_declaration' => ['type' => 'boolean', 'label' => 'Health declaration accepted', 'ar' => 'تمت الموافقة على الإقرار الصحي', 'field' => $yes_no, 'group' => 'personal'],
+
+    // ---- Academic information
+    'field_qualification' => ['type' => 'list_string', 'label' => 'Qualification', 'ar' => 'المؤهل', 'values' => [
+      'high-school' => ['High School', 'الثانوية العامة'],
+      'diploma' => ['Diploma', 'دبلوم'],
+      'bachelor' => ["Bachelor's Degree", 'بكالوريوس'],
+      'master' => ["Master's Degree", 'ماجستير'],
+      'other' => ['Other', 'أخرى'],
+    ], 'group' => 'academic'],
+    'field_major' => ['type' => 'list_string', 'label' => 'Major', 'ar' => 'التخصص', 'values' => [
+      'science' => ['Natural Sciences', 'العلوم الطبيعية'],
+      'engineering' => ['Engineering', 'الهندسة'],
+      'technology' => ['Technology', 'التقنية'],
+      'business' => ['Business / Administration', 'إدارة الأعمال'],
+      'humanities' => ['Humanities', 'العلوم الإنسانية'],
+      'other' => ['Other', 'أخرى'],
+    ], 'group' => 'academic'],
+    'field_graduation_year' => ['type' => 'integer', 'label' => 'Graduation year', 'ar' => 'سنة التخرج', 'field' => ['min' => 1970, 'max' => 2100], 'group' => 'academic'],
+    'field_english_level' => ['type' => 'list_string', 'label' => 'English level', 'ar' => 'مستوى اللغة الإنجليزية', 'values' => [
+      'beginner' => ['Beginner', 'مبتدئ'],
+      'intermediate' => ['Intermediate', 'متوسط'],
+      'advanced' => ['Advanced', 'متقدم'],
+      'fluent' => ['Fluent', 'طليق'],
+    ], 'group' => 'academic'],
+    'field_step_grade' => ['type' => 'integer', 'label' => 'STEP grade', 'ar' => 'درجة اختبار STEP', 'field' => ['min' => 0, 'max' => 100], 'group' => 'academic'],
+    'field_gpa' => ['type' => 'decimal', 'label' => 'GPA', 'ar' => 'المعدل التراكمي', 'storage' => ['precision' => 4, 'scale' => 2], 'field' => ['min' => 0, 'max' => 5], 'group' => 'academic'],
+    'field_university' => ['type' => 'string', 'label' => 'University / Institute', 'ar' => 'الجامعة / المعهد', 'storage' => ['max_length' => 255], 'group' => 'academic'],
+
+    // ---- Employment & eligibility
+    'field_employed' => ['type' => 'boolean', 'label' => 'Currently employed', 'ar' => 'يعمل حاليًا', 'field' => $yes_no, 'group' => 'employment'],
+    'field_social_insurance' => ['type' => 'boolean', 'label' => 'Registered in social insurance (GOSI)', 'ar' => 'مسجّل في التأمينات الاجتماعية', 'field' => $yes_no, 'group' => 'employment'],
+    'field_qiwa' => ['type' => 'boolean', 'label' => 'Registered in Qiwa', 'ar' => 'مسجّل في منصة قوى', 'field' => $yes_no, 'group' => 'employment'],
+    'field_commercial_reg' => ['type' => 'boolean', 'label' => 'Has a commercial registration', 'ar' => 'لديه سجل تجاري', 'field' => $yes_no, 'group' => 'employment'],
+    'field_hrdf' => ['type' => 'boolean', 'label' => 'Benefited from HRDF', 'ar' => 'استفاد من صندوق تنمية الموارد البشرية (هدف)', 'field' => $yes_no, 'group' => 'employment'],
+    'field_referral' => ['type' => 'list_string', 'label' => 'How did you hear about EWA?', 'ar' => 'كيف عرفت عن الأكاديمية؟', 'values' => [
+      'social-media' => ['Social Media', 'وسائل التواصل الاجتماعي'],
+      'website' => ['EWA Website', 'موقع الأكاديمية'],
+      'friend' => ['Friend or Family', 'صديق أو أحد أفراد العائلة'],
+      'employer' => ['Employer', 'جهة العمل'],
+      'event' => ['Event / Exhibition', 'فعالية / معرض'],
+      'other' => ['Other', 'أخرى'],
+    ], 'group' => 'employment'],
+    'field_data_confirm' => ['type' => 'boolean', 'label' => 'Data confirmed as correct', 'ar' => 'تم تأكيد صحة البيانات', 'field' => $yes_no, 'group' => 'employment'],
+
+    // ---- Selected programs (taxonomy "programs")
+    'field_programs' => ['type' => 'entity_reference', 'label' => 'Selected programs', 'ar' => 'البرامج المختارة', 'cardinality' => -1, 'storage' => ['target_type' => 'taxonomy_term'], 'field' => [
+      'handler' => 'default:taxonomy_term',
+      'handler_settings' => ['target_bundles' => ['programs' => 'programs'], 'auto_create' => FALSE],
+    ], 'group' => 'programs'],
+  ];
+}
+
+/** Form widget and display formatter per field type. */
+function ewa_trainee_fields_display(string $type): array {
+  return match ($type) {
+    'string' => ['string_textfield', 'string'],
+    'list_string' => ['options_select', 'list_default'],
+    'datetime' => ['datetime_default', 'datetime_default'],
+    'integer' => ['number', 'number_integer'],
+    'decimal' => ['number', 'number_decimal'],
+    'boolean' => ['boolean_checkbox', 'boolean'],
+    'entity_reference' => ['options_buttons', 'entity_reference_label'],
+  };
+}
+
+/**
+ * Implements hook_install().
+ */
+function ewa_trainee_fields_install(): void {
+  $definitions = ewa_trainee_fields_definitions();
+  $created = [];
+
+  foreach ($definitions as $name => $def) {
+    if (!FieldStorageConfig::loadByName('user', $name)) {
+      $storage_settings = $def['storage'] ?? [];
+      if ($def['type'] === 'list_string') {
+        $storage_settings['allowed_values'] = array_map(fn($labels) => $labels[0], $def['values']);
+      }
+      FieldStorageConfig::create([
+        'field_name' => $name,
+        'entity_type' => 'user',
+        'type' => $def['type'],
+        'cardinality' => $def['cardinality'] ?? 1,
+        'settings' => $storage_settings,
+      ])->save();
+    }
+    if (!FieldConfig::loadByName('user', 'user', $name)) {
+      FieldConfig::create([
+        'field_name' => $name,
+        'entity_type' => 'user',
+        'bundle' => 'user',
+        'label' => $def['label'],
+        'description' => $def['description'] ?? '',
+        // fields are filled by the registration form, so not required in the admin form
+        'required' => FALSE,
+        'settings' => $def['field'] ?? [],
+      ])->save();
+      $created[] = $name;
+    }
+  }
+
+  // Form + view displays, in registration order (after the account fields)
+  $form = EntityFormDisplay::load('user.user.default') ?? EntityFormDisplay::create(['targetEntityType' => 'user', 'bundle' => 'user', 'mode' => 'default', 'status' => TRUE]);
+  $view = EntityViewDisplay::load('user.user.default') ?? EntityViewDisplay::create(['targetEntityType' => 'user', 'bundle' => 'user', 'mode' => 'default', 'status' => TRUE]);
+  $weight = 20;
+  foreach ($definitions as $name => $def) {
+    [$widget, $formatter] = ewa_trainee_fields_display($def['type']);
+    if (!$form->getComponent($name)) {
+      $form->setComponent($name, ['type' => $widget, 'weight' => $weight]);
+    }
+    if (!$view->getComponent($name)) {
+      $settings = $def['type'] === 'datetime' ? ['format_type' => 'medium'] : [];
+      $view->setComponent($name, ['type' => $formatter, 'label' => 'inline', 'weight' => $weight, 'settings' => $settings]);
+    }
+    $weight++;
+  }
+  $form->save();
+  $view->save();
+
+  ewa_trainee_fields_translate($definitions);
+
+  \Drupal::messenger()->addStatus(t('EWA Trainee Fields: @count user fields created.', ['@count' => count($created)]));
+}
+
+/**
+ * Arabic labels (and list option labels), when the site has Arabic and language module.
+ */
+function ewa_trainee_fields_translate(array $definitions): void {
+  $languages = \Drupal::languageManager();
+  if (!\Drupal::moduleHandler()->moduleExists('language') || !$languages->getLanguage('ar') || !method_exists($languages, 'getLanguageConfigOverride')) {
+    return;
+  }
+  foreach ($definitions as $name => $def) {
+    $languages->getLanguageConfigOverride('ar', "field.field.user.user.$name")->set('label', $def['ar'])->save();
+    if ($def['type'] === 'list_string') {
+      $values = [];
+      foreach ($def['values'] as $key => $labels) {
+        $values[] = ['value' => $key, 'label' => $labels[1]];
+      }
+      $languages->getLanguageConfigOverride('ar', "field.storage.user.$name")->set('settings.allowed_values', $values)->save();
+    }
+    if ($def['type'] === 'boolean') {
+      $languages->getLanguageConfigOverride('ar', "field.field.user.user.$name")
+        ->set('settings.on_label', 'نعم')->set('settings.off_label', 'لا')->save();
+    }
+  }
+}

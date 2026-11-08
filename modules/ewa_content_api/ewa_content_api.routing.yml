@@ -171,3 +171,15 @@ ewa_content_api.password_reset:
   options:
     no_cache: TRUE
   methods: [POST]
+
+# Trainee registration from the Next.js form (called by the Next.js server):
+#   POST /api/auth/register  { registration fields, password, courses, lang }
+ewa_content_api.auth_register:
+  path: '/api/auth/register'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\RegisterApiController::register'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: TRUE
+  methods: [POST]

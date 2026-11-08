@@ -1,0 +1,11 @@
+name: 'EWA Trainee Fields'
+type: module
+description: 'Adds the Join EWA registration fields (personal, academic, employment, programs) to user accounts.'
+package: EWA
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - drupal:user
+  - drupal:field
+  - drupal:options
+  - drupal:datetime
+  - drupal:taxonomy

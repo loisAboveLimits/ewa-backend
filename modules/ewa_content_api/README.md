@@ -96,3 +96,21 @@ Required in `settings.php` (the address of the Next.js site, no trailing slash):
 
 Without it, the e-mail links to Drupal's own reset page. Drupal must be able to send e-mail
 (e.g. the SMTP or Symfony Mailer module on servers without a local mail server).
+
+## Registration (Next.js "Register in EWA")
+
+`POST /api/auth/register` — creates the trainee's Drupal account from the registration form:
+username = National ID, e-mail, password, and the fields of the **ewa_trainee_fields** module
+(install that module first). Selected courses are matched to terms of the `programs` vocabulary
+by name ("facilities-management" ↔ "Facilities Management"); unmatched ones are logged.
+
+Account status follows Configuration › People › Account settings › "Who can register accounts?":
+- Visitors → active at once (`status: "active"`), the trainee can sign in straight away.
+- Visitors, but administrator approval is required → blocked (`status: "pending"`); Drupal e-mails
+  the trainee and the site; activate the account under People.
+- Administrators only → registration is refused (`error: "closed"`).
+
+`GET /api/auth/me?lang=en|ar` now also returns `profile` (the registration values + programs).
+
+Sign-in and "forgot password" accept the username, the e-mail, or the National ID / Iqama number
+(also for accounts whose username is something else, through `field_national_id`).

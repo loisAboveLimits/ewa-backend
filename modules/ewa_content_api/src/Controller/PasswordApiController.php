@@ -7,6 +7,7 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
+use Drupal\ewa_content_api\TraineeProfile;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -56,9 +57,8 @@ class PasswordApiController extends ControllerBase {
     }
     $this->flood->register('user.password_request_ip', $config->get('ip_window'));
 
-    $storage = $this->entityTypeManager()->getStorage('user');
-    $found = $storage->loadByProperties(['name' => $identifier]) ?: $storage->loadByProperties(['mail' => $identifier]);
-    $account = $found ? reset($found) : NULL;
+    // username, e-mail, or National ID / Iqama number
+    $account = TraineeProfile::findAccount($identifier);
 
     if ($account instanceof UserInterface && $account->isActive() && $account->getEmail()) {
       $floodId = (string) $account->id();

@@ -4,6 +4,7 @@ namespace Drupal\ewa_content_api\Controller;
 
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\ewa_content_api\TraineeProfile;
 use Drupal\user\UserAuthInterface;
 use Drupal\user\UserFloodControlInterface;
 use Drupal\user\UserInterface;
@@ -14,13 +15,14 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Sign-in for the Next.js site (the Next.js server calls these; browsers never talk to Drupal).
  *
- * POST /api/auth/login   body { "identifier": "<username or e-mail>", "password": "…" }
+ * POST /api/auth/login   body { "identifier": "<username, e-mail or National ID / Iqama>", "password": "…" }
  *   200 { user…, "logout_token": "…" } + the Drupal session cookie (Set-Cookie)
  *   400 missing fields · 401 wrong details / blocked account · 429 too many attempts
  *   Uses Drupal's own password check and flood control (Configuration › People › Account settings).
  *
- * GET /api/auth/me   (send the Drupal session cookie)
- *   200 { uid, name, display_name, mail, roles, created, access, login, langcode } · 401 not signed in
+ * GET /api/auth/me?lang=en|ar   (send the Drupal session cookie)
+ *   200 { uid, name, display_name, mail, roles, created, access, login, langcode, profile } · 401 not signed in
+ *   profile = the registration fields (TraineeProfile) + programs [{ tid, name, slug }]
  *
  * Sign out with Drupal core: POST /user/logout?_format=json&token={logout_token}
  */
@@ -53,10 +55,8 @@ class AuthApiController extends ControllerBase {
       return $this->json(['message' => 'Too many failed sign-in attempts. Try again later.'], 429);
     }
 
-    // username first, then e-mail
-    $storage = $this->entityTypeManager()->getStorage('user');
-    $found = $storage->loadByProperties(['name' => $identifier]) ?: $storage->loadByProperties(['mail' => $identifier]);
-    $account = $found ? reset($found) : NULL;
+    // username, e-mail, or National ID / Iqama number
+    $account = TraineeProfile::findAccount($identifier);
 
     $floodId = NULL;
     if ($account instanceof UserInterface) {
@@ -86,13 +86,16 @@ class AuthApiController extends ControllerBase {
     return $this->json($this->userData($account) + ['logout_token' => $this->csrf->get('user/logout')]);
   }
 
-  public function me(): JsonResponse {
+  public function me(Request $request): JsonResponse {
     if ($this->currentUser()->isAnonymous()) {
       return $this->json(['message' => 'Not signed in.'], 401);
     }
     $account = $this->entityTypeManager()->getStorage('user')->load($this->currentUser()->id());
     return $account instanceof UserInterface
-      ? $this->json($this->userData($account))
+      ? $this->json($this->userData($account) + [
+        // registration fields (ewa_trainee_fields) — program names in ?lang=en|ar
+        'profile' => TraineeProfile::read($account, in_array($request->query->get('lang'), ['en', 'ar'], TRUE) ? $request->query->get('lang') : 'en'),
+      ])
       : $this->json(['message' => 'Not signed in.'], 401);
   }
 
@@ -108,6 +111,8 @@ class AuthApiController extends ControllerBase {
       'created' => $iso($account->getCreatedTime()),
       'access' => $iso($account->getLastAccessedTime()),
       'login' => $iso($account->getLastLoginTime()),
+      // first name from registration (ewa_trainee_fields), for greetings
+      'first_name' => $account->hasField('field_first_name') ? (string) ($account->get('field_first_name')->value ?? '') : '',
     ];
   }
 
