@@ -27,3 +27,15 @@ function ewa_content_api_node_presave(NodeInterface $node): void {
     }
   }
 }
+
+/**
+ * Implements hook_mail().
+ *
+ * "password_reset": the e-mail sent by POST /api/auth/password/forgot (PasswordApiController).
+ */
+function ewa_content_api_mail(string $key, array &$message, array $params): void {
+  if ($key === 'password_reset') {
+    $message['subject'] = $params['subject'];
+    $message['body'][] = $params['body'];
+  }
+}

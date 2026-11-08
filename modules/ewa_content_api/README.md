@@ -68,3 +68,31 @@ careers API: `nid`, `title`, `main_title`, `date`, `published`, `image` (`{ imag
 `GET /api/team/{langcode}` — published nodes of the content type **team**.
 `GET /api/team/{slug}/{langcode}` — one member (404 JSON when not found); the slug comes from the member's
 English name (node title). Same item shape as the careers API plus `position` (`field_position`).
+
+## Sign-in (Next.js login + Trainee Dashboard)
+
+- `POST /api/auth/login` — body `{ "identifier": "<username or e-mail>", "password": "…" }`.
+  Success: user data + `logout_token`, and Drupal's session cookie in `Set-Cookie`.
+  401 wrong details or blocked account, 429 too many failed attempts (Drupal flood control).
+- `GET /api/auth/me` — the signed-in user (send the session cookie), 401 when signed out.
+- Sign out: core `POST /user/logout?_format=json&token={logout_token}` with the session cookie.
+
+The Next.js server makes these calls, so Drupal sees the Next.js server's IP for every visitor.
+Drupal's per-IP flood limit (50 failures / hour by default) therefore counts all visitors together:
+configure `reverse_proxy` / `reverse_proxy_addresses` in settings.php for the Next.js server so Drupal
+uses the visitor's IP from `X-Forwarded-For` (the Next.js login route sends it).
+
+## Password reset (Next.js "Forgot password?")
+
+- `POST /api/auth/password/forgot` — `{ "identifier": "<username or e-mail>", "lang": "en" | "ar" }`.
+  Always answers 200; when the account exists it e-mails a one-time link (Drupal's own token,
+  valid for `password_reset_timeout`, 24 h by default) to the Next.js page `/reset-password`.
+- `POST /api/auth/password/reset` — `{ "uid", "ts", "hash", "password" }` (password ≥ 8 characters).
+  200 changed · 400 `weak` · 403 `invalid` (wrong, expired or already used link).
+
+Required in `settings.php` (the address of the Next.js site, no trailing slash):
+
+    $settings['ewa_frontend_url'] = 'http://localhost:3000';
+
+Without it, the e-mail links to Drupal's own reset page. Drupal must be able to send e-mail
+(e.g. the SMTP or Symfony Mailer module on servers without a local mail server).
