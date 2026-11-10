@@ -128,3 +128,11 @@ options; `POST /api/webform/ewa_contact_us` `{ lang, data: { first_name, last_na
 telephone_mobile, sponsorship, comments } }` saves a submission (e-mail handlers run as usual,
 results under Structure → Webforms → EWA Contact Us → Results). 10 submissions per visitor per hour.
 To allow another webform, add its id to `WebformApiController::ALLOWED`.
+
+## Career applications (webform `ewa_careers`)
+
+`POST /api/webform/ewa_careers` `{ lang, data: { career_id, full_name, email, mobile_number,
+years_of_experience, cover_letter } }`. `career_id` must be a published `careers` node; the
+`position` element is filled in by Drupal from that career's Main Title. To receive CVs, add a
+File / Document file element keyed `cv` or `resume` (allowed: pdf doc docx, max 5 MB) — the
+Next.js form shows the CV upload only when that element exists.
