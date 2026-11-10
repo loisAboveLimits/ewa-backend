@@ -114,3 +114,9 @@ Account status follows Configuration › People › Account settings › "Who ca
 
 Sign-in and "forgot password" accept the username, the e-mail, or the National ID / Iqama number
 (also for accounts whose username is something else, through `field_national_id`).
+
+## Profile editing (Next.js My Profile)
+
+`POST /api/auth/profile` (with the session cookie) — the signed-in trainee updates their own
+registration details. Not editable there: National ID / Iqama (username), e-mail, password,
+declarations and selected programs. 400 `{ error: "invalid", fields }` when a value is wrong.

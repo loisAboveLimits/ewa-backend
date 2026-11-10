@@ -183,3 +183,15 @@ ewa_content_api.auth_register:
   options:
     no_cache: TRUE
   methods: [POST]
+
+# The signed-in trainee updates their own details (Next.js My Profile; send the session cookie):
+#   POST /api/auth/profile  { firstName, mobile, … }
+ewa_content_api.auth_profile:
+  path: '/api/auth/profile'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\ProfileApiController::update'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: TRUE
+  methods: [POST]
