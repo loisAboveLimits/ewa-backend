@@ -195,3 +195,26 @@ ewa_content_api.auth_profile:
   options:
     no_cache: TRUE
   methods: [POST]
+
+# Webforms on the Next.js site (contact forms). Only the webforms listed in
+# WebformApiController::ALLOWED are available.
+#   GET  /api/webform/ewa_contact_us?lang=ar   → select options (Sponsorship)
+#   POST /api/webform/ewa_contact_us           { lang, data: { first_name, last_name, email, telephone_mobile, sponsorship, comments } }
+ewa_content_api.webform_elements:
+  path: '/api/webform/{webform_id}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\WebformApiController::elements'
+  requirements:
+    _access: 'TRUE'
+    webform_id: '[a-z0-9_]+'
+  methods: [GET]
+ewa_content_api.webform_submit:
+  path: '/api/webform/{webform_id}'
+  defaults:
+    _controller: '\Drupal\ewa_content_api\Controller\WebformApiController::submit'
+  requirements:
+    _access: 'TRUE'
+    webform_id: '[a-z0-9_]+'
+  options:
+    no_cache: TRUE
+  methods: [POST]

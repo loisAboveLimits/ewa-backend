@@ -8,3 +8,4 @@ dependencies:
   - drupal:media
   - drupal:taxonomy
   - drupal:file
+  - webform:webform

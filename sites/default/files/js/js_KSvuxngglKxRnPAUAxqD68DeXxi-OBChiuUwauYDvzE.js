@@ -1,0 +1,2 @@
+/* @license GPL-2.0-or-later https://www.drupal.org/licensing/faq */
+(function($,Drupal,once){Drupal.behaviors.webformSubmitTrigger={attach(context){$(once('webform-trigger-submit','[data-webform-trigger-submit]')).on('change',function(){const submitSelector=this.getAttribute('data-webform-trigger-submit');let submitElement;try{submitElement=document.querySelector(submitSelector);}catch(error){return;}if(submitElement)$(submitElement).trigger('mousedown');});}};})(jQuery,Drupal,once);;

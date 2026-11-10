@@ -120,3 +120,11 @@ Sign-in and "forgot password" accept the username, the e-mail, or the National I
 `POST /api/auth/profile` (with the session cookie) — the signed-in trainee updates their own
 registration details. Not editable there: National ID / Iqama (username), e-mail, password,
 declarations and selected programs. 400 `{ error: "invalid", fields }` when a value is wrong.
+
+## Contact forms (webform `ewa_contact_us`)
+
+Requires the Webform module. `GET /api/webform/ewa_contact_us?lang=ar` gives the Sponsorship
+options; `POST /api/webform/ewa_contact_us` `{ lang, data: { first_name, last_name, email,
+telephone_mobile, sponsorship, comments } }` saves a submission (e-mail handlers run as usual,
+results under Structure → Webforms → EWA Contact Us → Results). 10 submissions per visitor per hour.
+To allow another webform, add its id to `WebformApiController::ALLOWED`.
