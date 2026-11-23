@@ -1,0 +1,297 @@
+{
+    "menu": {
+        "id": "front",
+        "label": "Frontend Navigation",
+        "description": "EWA Main Navigation"
+    },
+    "links": [
+        {
+            "uuid": "ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "langcode": "en",
+            "title": "About EWA",
+            "description": "",
+            "link": "internal:/about",
+            "options": [],
+            "parent": "",
+            "weight": -50,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "عن الأكاديمية",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "28884a2f-23cb-472e-8bcc-d5c124c525eb",
+            "langcode": "en",
+            "title": "Why Ewa",
+            "description": "",
+            "link": "internal:/why#about",
+            "options": [],
+            "parent": "menu_link_content:ee40017c-f696-4de6-9122-c0c14be07ad3",
+            "weight": -50,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "لماذا الأكاديمية",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "997b16b1-fd8b-4098-b63f-dde7d645657c",
+            "langcode": "en",
+            "title": "About Ewa",
+            "description": "",
+            "link": "internal:/about#about",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -50,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "عن الأكاديمية",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "404d5a14-7f9b-472a-96b1-3a255ec45752",
+            "langcode": "en",
+            "title": "Our Values",
+            "description": "",
+            "link": "internal:/about#values",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -49,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "قيمنا",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "ee40017c-f696-4de6-9122-c0c14be07ad3",
+            "langcode": "en",
+            "title": "Why EWA",
+            "description": "",
+            "link": "internal:/why",
+            "options": [],
+            "parent": "",
+            "weight": -49,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "لماذا الأكاديمية",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "393b10b0-d73c-4816-8465-ca622e1f4743",
+            "langcode": "en",
+            "title": "Accreditation",
+            "description": "",
+            "link": "internal:/why#accreditation",
+            "options": [],
+            "parent": "menu_link_content:ee40017c-f696-4de6-9122-c0c14be07ad3",
+            "weight": -49,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "الاعتماد",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "7752b315-412f-4b81-9ae1-01d95880c5aa",
+            "langcode": "en",
+            "title": "Board Of Directors",
+            "description": "",
+            "link": "internal:/about#directors",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -48,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "مجلس الإدارة",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "bb00939f-248f-4f04-8176-1006c546fcd9",
+            "langcode": "en",
+            "title": "EWA Community",
+            "description": "",
+            "link": "internal:/community",
+            "options": [],
+            "parent": "",
+            "weight": -48,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "مجتمع الأكاديمية",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "1e2870f9-62b5-4727-bed6-3fcd1339ebbf",
+            "langcode": "en",
+            "title": "EWA in a Glance",
+            "description": "",
+            "link": "internal:/why#glance",
+            "options": [],
+            "parent": "menu_link_content:ee40017c-f696-4de6-9122-c0c14be07ad3",
+            "weight": -48,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "الأكاديمية في لمحة",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "a5ddf65b-dab7-4087-9404-12f431316fd5",
+            "langcode": "en",
+            "title": "Campus & Facilities",
+            "description": "",
+            "link": "internal:/why#campus",
+            "options": [],
+            "parent": "menu_link_content:ee40017c-f696-4de6-9122-c0c14be07ad3",
+            "weight": -47,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "الحرم والمرافق",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "db21c948-f08f-4d0e-9c0b-502a3bf34ba9",
+            "langcode": "en",
+            "title": "Chairman Message",
+            "description": "",
+            "link": "internal:/about#chairman",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -47,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "كلمة رئيس مجلس الإدارة",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "59a48908-2397-4b72-99ed-6d947e90ca40",
+            "langcode": "en",
+            "title": "EWA User",
+            "description": "",
+            "link": "internal:/users",
+            "options": [],
+            "parent": "",
+            "weight": -47,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "المستخدمون",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "f19f2f29-2632-4157-9729-7755228cde65",
+            "langcode": "en",
+            "title": "Academic Calendar",
+            "description": "",
+            "link": "internal:/about#timeline",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -46,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "التقويم الأكاديمي",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "0384093a-7b5d-4f07-8f91-929a310d0bc6",
+            "langcode": "en",
+            "title": "EWA Join",
+            "description": "",
+            "link": "internal:/join",
+            "options": [],
+            "parent": "",
+            "weight": -46,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "انضم إلينا",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "e0b54f87-2b4b-415b-a88e-ac39b51f51a0",
+            "langcode": "en",
+            "title": "Sponsors",
+            "description": "",
+            "link": "internal:/about#sponsors",
+            "options": [],
+            "parent": "menu_link_content:ca001d7d-7dd2-42d7-885c-8ee790b3afd6",
+            "weight": -45,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "الرعاة",
+                    "description": ""
+                }
+            }
+        },
+        {
+            "uuid": "4c43fe9a-89e4-4fd0-b91f-7f7ac9d24934",
+            "langcode": "en",
+            "title": "Contact",
+            "description": "",
+            "link": "internal:/contact",
+            "options": [],
+            "parent": "",
+            "weight": 0,
+            "expanded": false,
+            "enabled": true,
+            "translations": {
+                "ar": {
+                    "title": "تواصل معنا",
+                    "description": ""
+                }
+            }
+        }
+    ]
+}
