@@ -68,6 +68,59 @@ class ProfileApiController extends ControllerBase {
     return $this->json(['ok' => TRUE]);
   }
 
+  /**
+   * The signed-in trainee applies for more programs (Next.js /users/dashboard/apply).
+   *
+   * POST /api/auth/programs   (send the Drupal session cookie)
+   *   body: { "courses": ["facilities-management", …], "lang": "en" | "ar" }
+   *   200 { ok: true, added: [tid…], programs: [{tid, name, slug}…], unmatched_programs: […] }
+   *   400 { error: "invalid" } (no course matched a program) · 401 not signed in
+   *
+   * Programs already on the account are kept; the new ones are added to field_programs.
+   */
+  public function programs(Request $request): JsonResponse {
+    if ($this->currentUser()->isAnonymous()) {
+      return $this->json(['error' => 'signed_out'], 401);
+    }
+    $account = $this->entityTypeManager()->getStorage('user')->load($this->currentUser()->id());
+    if (!$account instanceof UserInterface) {
+      return $this->json(['error' => 'signed_out'], 401);
+    }
+    if (!$account->hasField(TraineeProfile::PROGRAMS_FIELD)) {
+      return $this->json(['error' => 'unavailable'], 503);
+    }
+
+    $body = json_decode((string) $request->getContent(), TRUE);
+    $courses = is_array($body) && is_array($body['courses'] ?? NULL) ? array_filter($body['courses'], 'is_string') : [];
+    $lang = in_array($body['lang'] ?? '', ['en', 'ar'], TRUE) ? $body['lang'] : 'en';
+    if (!$courses) {
+      return $this->json(['error' => 'invalid'], 400);
+    }
+
+    [$tids, $unmatched] = TraineeProfile::matchPrograms($courses);
+    if (!$tids) {
+      return $this->json(['error' => 'invalid', 'unmatched_programs' => $unmatched], 400);
+    }
+
+    $current = array_map(fn($item) => (int) $item['target_id'], $account->get(TraineeProfile::PROGRAMS_FIELD)->getValue());
+    $added = array_values(array_diff($tids, $current));
+    if ($added) {
+      $account->set(TraineeProfile::PROGRAMS_FIELD, array_values(array_unique(array_merge($current, $added))));
+      $account->save();
+      $this->getLogger('ewa_content_api')->notice('%name applied for programs: @tids', [
+        '%name' => $account->getAccountName(),
+        '@tids' => implode(', ', $added),
+      ]);
+    }
+
+    return $this->json([
+      'ok' => TRUE,
+      'added' => $added,
+      'programs' => TraineeProfile::read($account, $lang)['programs'] ?? [],
+      'unmatched_programs' => $unmatched,
+    ]);
+  }
+
   /** The same rules as the registration form. */
   protected function check(array $d): array {
     $e = [];

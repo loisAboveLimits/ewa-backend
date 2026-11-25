@@ -136,3 +136,12 @@ years_of_experience, cover_letter } }`. `career_id` must be a published `careers
 `position` element is filled in by Drupal from that career's Main Title. To receive CVs, add a
 File / Document file element keyed `cv` or `resume` (allowed: pdf doc docx, max 5 MB) — the
 Next.js form shows the CV upload only when that element exists.
+
+
+### Apply for more programs (signed in)
+
+`POST /api/auth/programs` (with the session cookie) `{ "courses": ["facilities-management"], "lang": "en" }`
+adds the matching terms of the "programs" vocabulary to the trainee's `field_programs` (programs
+already there are kept). Answers `{ ok, added, programs, unmatched_programs }`, 400 when no course
+matched a program, 401 when signed out. Registration (`POST /api/auth/register`) no longer needs
+`courses` — new trainees choose programs after signing in.
